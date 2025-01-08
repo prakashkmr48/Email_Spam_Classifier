@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import accuracy_score, classification_report
+import re
 
 # Streamlit app title
 st.title("Email Spam Classifier")
@@ -21,17 +22,23 @@ data = {
     'label': ['spam', 'non-spam', 'spam', 'non-spam', 'spam', 'non-spam']
 }
 
-# Convert the data to a DataFrame
+# Preprocessing function
+def preprocess_text(text):
+    text = text.lower()  # Convert to lowercase
+    text = re.sub(r'\W', ' ', text)  # Remove non-word characters
+    text = re.sub(r'\s+', ' ', text)  # Remove extra spaces
+    return text.strip()
+
+# Preprocess the dataset
 df = pd.DataFrame(data)
+df['email'] = df['email'].apply(preprocess_text)
 
 # Display the dataset in Streamlit
 st.write("Dataset:", df)
 
-# Preprocess the data
+# Split the dataset into training and testing sets
 X = df['email']
 y = df['label']
-
-# Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Convert text to numerical data using CountVectorizer
@@ -56,6 +63,7 @@ st.text(classification_report(y_test, y_pred))
 st.header("Test Your Own Email")
 example_email = st.text_input("Enter an email to classify:")
 if example_email:
-    example_email_transformed = vectorizer.transform([example_email])
+    preprocessed_email = preprocess_text(example_email)
+    example_email_transformed = vectorizer.transform([preprocessed_email])
     prediction = model.predict(example_email_transformed)
     st.write(f"The email is classified as: {prediction[0]}")
